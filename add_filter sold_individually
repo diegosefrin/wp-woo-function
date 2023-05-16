@@ -1,0 +1,6 @@
+// *
+*Adiciona filtro para definir que todos os produtos são vendidos individualmente
+*Adds filter to define that all products are sold individually
+*/
+
+add_filter( 'woocommerce_is_sold_individually', '__return_true' );
