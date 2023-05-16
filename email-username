@@ -1,0 +1,23 @@
+/**
+ *referente ao username do wordpress e/ou woocommerce
+ *força o uso da parte antes do @ e entre o @ e o . do email como username no cadastro do wordPress,
+ *acrescentando [-1] em caso de conflito com um username existente. 
+ *exemplo email exemplo@gmail.com - user name exemplo-gmail
+ *e caso gere conflito com algum já cadastrado, adiciona -1... -2...
+ */
+function force_email_username($user_login, $email, $errors) {
+    $username = substr($email, 0, strpos($email, '@'));
+    $domain = substr($email, strpos($email, '@') + 1);
+    $domain_prefix = substr($domain, 0, strpos($domain, '.'));
+    $suffix = '';
+    $count = 1;
+
+    while (username_exists($username . '-' . $domain_prefix . $suffix)) {
+        $suffix = '[-' . $count . ']';
+        $count++;
+    }
+
+    $user_login = $username . '-' . $domain_prefix . $suffix;
+    return $user_login;
+}
+add_filter('pre_user_login', 'force_email_username', 10, 3);
