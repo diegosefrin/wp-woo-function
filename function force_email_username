@@ -1,23 +1,39 @@
 /**
  *referente ao username do wordpress e/ou woocommerce
- *força o uso da parte antes do @ e entre o @ e o . do email como username no cadastro do wordPress,
+ *Personaliza a geração automática do nome de usuário com base no e-mail
+ *força o uso da parte antes do @ e entre o @ e o . do email como username no cadastro do wordPress/woocommerce,
  *acrescentando [-1] em caso de conflito com um username existente. 
  *exemplo email exemplo@gmail.com - user name exemplo-gmail
  *e caso gere conflito com algum já cadastrado, adiciona -1... -2...
  */
-function force_email_username($user_login, $email, $errors) {
-    $username = substr($email, 0, strpos($email, '@'));
-    $domain = substr($email, strpos($email, '@') + 1);
-    $domain_prefix = substr($domain, 0, strpos($domain, '.'));
-    $suffix = '';
-    $count = 1;
-
-    while (username_exists($username . '-' . $domain_prefix . $suffix)) {
-        $suffix = '[-' . $count . ']';
-        $count++;
+function custom_generate_username($username, $email, $user_args) {
+    $username_parts = explode('@', $email);
+    
+    // Verifica se o e-mail tem o formato correto
+    if (count($username_parts) === 2) {
+        $username_prefix = sanitize_user($username_parts[0]);
+        $username_suffix = sanitize_user(substr($username_parts[1], 0, strpos($username_parts[1], '.')));
+        
+        // Verifica se as partes do nome de usuário são válidas
+        if ($username_prefix && $username_suffix) {
+            $generated_username = $username_prefix . '-' . $username_suffix;
+            
+            // Verifica se o nome de usuário gerado já existe
+            if (!username_exists($generated_username)) {
+                $username = $generated_username;
+            } else {
+                $suffix = 1;
+                
+                // Acrescenta um sufixo incremental até encontrar um nome de usuário disponível
+                while (username_exists($generated_username . '-' . $suffix)) {
+                    $suffix++;
+                }
+                
+                $username = $generated_username . '-' . $suffix;
+            }
+        }
     }
-
-    $user_login = $username . '-' . $domain_prefix . $suffix;
-    return $user_login;
+    
+    return $username;
 }
-add_filter('pre_user_login', 'force_email_username', 10, 3);
+add_filter('woocommerce_new_customer_username', 'custom_generate_username', 10, 3);
