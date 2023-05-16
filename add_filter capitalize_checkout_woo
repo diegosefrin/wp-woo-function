@@ -1,0 +1,37 @@
+add_filter('woocommerce_checkout_posted_data', 'my_custom_woocommerce_checkout_posted_data');
+function my_custom_woocommerce_checkout_posted_data($data){
+  // The data posted by the user comes from the $data param. 
+  // You would look for the fields being posted, 
+  // like "billing_first_name" and "billing_last_name"
+
+  if($data['billing_first_name']){
+    /*
+      From hello world to Hello World
+    */
+    $data['billing_first_name'] = strtolower($data['billing_first_name']);
+  }
+	
+  if($data['billing_first_name']){
+    /*
+      From hello world to Hello World
+    */
+    $data['billing_first_name'] = ucwords($data['billing_first_name']);
+  }
+
+  if($data['billing_last_name']){
+    $data['billing_last_name'] = strtolower($data['billing_last_name']);
+  }
+
+  if($data['billing_last_name']){
+    $data['billing_last_name'] = ucwords($data['billing_last_name']);
+  }
+	
+  if($data['billing_email']){
+    /*
+      From TESTE@TESTE.COM to teste@teste.com
+    */
+    $data['billing_email'] = strtolower($data['billing_email']);
+  }
+	
+  return $data;
+}
