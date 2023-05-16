@@ -1,0 +1,5 @@
+/**
+ * Define que todos os itens do pedido precisam de processamento no WooCommerce.
+ * Isso altera o valor de retorno padrão para verdadeiro, indicando que todos os itens do pedido devem ser processados.
+ */
+add_filter( 'woocommerce_order_item_needs_processing', '__return_true' );
