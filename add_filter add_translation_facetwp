@@ -1,0 +1,19 @@
+// 
+*Traduz termos não traduzidos no FacetWP
+*/ 
+add_filter('facetwp_i18n', function ($string) {
+	if (isset(FWP()->facet->http_params['lang'])) {
+		$lang = FWP()->facet->http_params['lang'];
+
+		$translations = [];
+		$translations['pt-BR']['Any'] = 'Qualquer';
+		$translations['pt-BR']['Showing all [total] results'] = 'Mostranod todos os [total] resultados';
+
+
+		if (isset($translations[$lang][$string])) {
+			return $translations[$lang][$string];
+		}
+	}
+
+	return $string;
+});
