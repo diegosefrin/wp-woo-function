@@ -1,0 +1,55 @@
+//Created with the assistance of ChatGPT by OpenAI
+
+
+// Adiciona a coluna "Vendas" na lista de produtos
+add_filter( 'manage_edit-product_columns', 'custom_add_sales_column', 20 );
+function custom_add_sales_column( $columns ) {
+    $columns['product_sales'] = 'Vendas';
+    return $columns;
+}
+
+// Popula a coluna "Vendas" com dados
+add_filter( 'manage_product_posts_custom_column', 'custom_populate_sales_column', 20, 2 );
+function custom_populate_sales_column( $column, $post_id ) {
+    if ( $column === 'product_sales' ) {
+        $product = wc_get_product( $post_id );
+        if ( $product ) {
+            $sales_count = $product->get_total_sales();
+            echo $sales_count;
+        }
+    }
+}
+
+// Torna a coluna "Vendas" ordenável
+add_filter( 'manage_edit-product_sortable_columns', 'custom_sales_column_sortable', 20 );
+function custom_sales_column_sortable( $columns ) {
+    $columns['product_sales'] = 'product_sales';
+    return $columns;
+}
+
+// Ordena a listagem de produtos pela coluna "Vendas"
+add_action( 'pre_get_posts', 'custom_sales_column_orderby' );
+function custom_sales_column_orderby( $query ) {
+    if ( ! is_admin() || ! $query->is_main_query() || $query->get( 'orderby' ) !== 'product_sales' ) {
+        return;
+    }
+
+    $query->set( 'meta_key', 'total_sales' );
+    $query->set( 'orderby', 'meta_value_num' );
+}
+
+// Define a largura da coluna "Vendas"
+add_filter( 'manage_edit-product_columns', 'custom_set_column_width' );
+add_action( 'admin_head', 'custom_products_table_styles' );
+function custom_set_column_width( $columns ) {
+    $columns['product_sales'] = '10%'; // Defina a largura da coluna aqui (pode ser em px ou %)
+    return $columns;
+}
+
+function custom_products_table_styles() {
+    echo '<style>
+        .fixed .column-product_sales {
+            width: 10%; /* Defina a largura da coluna aqui (mesmo valor definido acima) */
+        }
+    </style>';
+}
