@@ -1,0 +1,14 @@
+add_shortcode( 'woocommerce_discount_alert', 'woocommerce_discount_alert_shortcode' );
+
+function woocommerce_discount_alert_shortcode() {
+  $qty = WC()->cart->get_cart_contents_count();
+  if( $qty >= 20 ) {
+    echo '<h3 style="text-align: center;">Você já atingiu o topo! 70% desconto! Feche com PIX e ganhe mais 5%</h3>';
+  } elseif( $qty >= 10 ) {
+    echo '<h3 style="text-align: center;">Você já atingiu 60% de desconto... Não pare por aqui, com mais ' . (20 - $qty) . ' projetos você terá 70% de desconto!</h3>';
+  } elseif( $qty >= 5 ) {
+    echo '<h3 style="text-align: center;">Você ganhou 50% de desconto, quer mais? Com mais ' . (10 - $qty) . ' projetos você terá 60% de desconto!</h3>';
+  } else {
+    echo '<h3 style="text-align: center;">Com mais ' . (5 - $qty) . ' projetos você terá 50% de desconto nesta compra!</h3>';
+  }
+}
