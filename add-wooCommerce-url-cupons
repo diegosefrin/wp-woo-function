@@ -1,3 +1,4 @@
+//Created with the assistance of ChatGPT by OpenAI
 // Verificar e aplicar o cupom fornecido na URL
 add_action('init', 'apply_coupon_from_url');
 
