@@ -1,0 +1,15 @@
+// Verificar e aplicar o cupom fornecido na URL
+add_action('init', 'apply_coupon_from_url');
+
+function apply_coupon_from_url() {
+    if (isset($_GET['coupon'])) {
+        $coupon_code = sanitize_text_field($_GET['coupon']);
+        $coupon = new WC_Coupon($coupon_code);
+
+        if ($coupon->get_id() > 0 && $coupon->is_valid()) {
+            WC()->cart->apply_coupon($coupon_code);
+        } else {
+            wc_add_notice('Código de cupom inválido ou expirado!', 'error');
+        }
+    }
+}
