@@ -121,7 +121,7 @@ function custom_block_blocked_users($user_login, $user)
         if ($user_status === 'blocked') {
             $reason = get_user_meta($user->ID, 'user_lock_reason', true);
             wp_logout();
-            $message = 'O acesso desta conta foi bloqueado! ' . wp_kses_post($reason);
+            $message = '<h2 style="text-align: center;">O acesso desta conta foi bloqueado!</h2> ' . wp_kses_post($reason);
             wp_die($message, 'Acesso Bloqueado', array('response' => 403));
         }
     }
@@ -134,7 +134,7 @@ function custom_show_blocked_message($message)
 {
     if (isset($_GET['blocked']) && $_GET['blocked'] === 'true' && isset($_GET['reason'])) {
         $reason = urldecode($_GET['reason']);
-        $message .= '<p class="woocommerce-error">O acesso desta conta foi bloqueado! ' . wp_kses_post($reason) . '</p>';
+        $message .= '<p class="woocommerce-error"><h2 style="text-align: center;">O acesso desta conta foi bloqueado!</h2> ' . wp_kses_post($reason) . '</p>';
     }
     return $message;
 }
