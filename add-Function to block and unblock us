@@ -1,0 +1,94 @@
+/**
+ * Function to block and unblock users.
+ *
+ * Description: This code adds an option to block users on the user 
+ * edit screen, saving the block status and the reason for blocking 
+ * when updating the user profile. It also blocks login for blocked 
+ * users and displays block messages on the login page.
+ *
+ * Attribution: Created with the assistance of ChatGPT by OpenAI (https://www.openai.com/).
+ * 
+ * https://github.com/diegosefrin/wp-woo-function
+ *
+ *----------------------------------------------------------------------------------------
+ * pt_BR
+ * Função para bloquear e desbloquear usuários.
+ *
+ * Descrição: Este código adiciona uma opção para bloquear usuários 
+ * na tela de edição de usuários, salvando o status de bloqueio e a 
+ * justificativa ao atualizar o perfil. Também bloqueia o login para 
+ * usuários bloqueados e exibe mensagens de bloqueio na página de login.
+ *
+ * Atribuição: Criado com a assistência de ChatGPT por OpenAI (https://www.openai.com/).
+ * 
+ * https://github.com/diegosefrin/wp-woo-function
+ *
+ **/
+
+
+// Adiciona uma opção para bloquear usuários na tela de edição de usuários
+add_action('show_user_profile', 'custom_add_user_lock_field');
+add_action('edit_user_profile', 'custom_add_user_lock_field');
+
+function custom_add_user_lock_field($user)
+{
+    $user_status = get_user_meta($user->ID, 'user_status', true);
+    ?>
+    <h3>Bloquear usuário</h3>
+    <input type="checkbox" name="user_status" value="blocked" <?php checked($user_status, 'blocked'); ?> /> Bloquear usuário
+    <p>Ao bloquear este usuário, ele não poderá fazer login no site.</p>
+    <h3>Justificativa do bloqueio</h3>
+    <textarea name="user_lock_reason" rows="5" cols="50"><?php echo esc_textarea(get_user_meta($user->ID, 'user_lock_reason', true)); ?></textarea>
+    <?php
+}
+
+// Salva o status de bloqueio do usuário e a justificativa ao atualizar o perfil
+add_action('personal_options_update', 'custom_save_user_lock_data');
+add_action('edit_user_profile_update', 'custom_save_user_lock_data');
+
+function custom_save_user_lock_data($user_id)
+{
+    if (!current_user_can('edit_user', $user_id)) {
+        return;
+    }
+
+    if (isset($_POST['user_status']) && $_POST['user_status'] === 'blocked') {
+        update_user_meta($user_id, 'user_status', 'blocked');
+    } else {
+        delete_user_meta($user_id, 'user_status');
+    }
+
+    if (isset($_POST['user_lock_reason'])) {
+        update_user_meta($user_id, 'user_lock_reason', $_POST['user_lock_reason']);
+    } else {
+        delete_user_meta($user_id, 'user_lock_reason');
+    }
+}
+
+// Bloquear login para usuários bloqueados
+add_action('wp_login', 'custom_block_blocked_users', 10, 2);
+
+function custom_block_blocked_users($user_login, $user)
+{
+    if ($user && isset($user->ID)) {
+        $user_status = get_user_meta($user->ID, 'user_status', true);
+        if ($user_status === 'blocked') {
+            $reason = get_user_meta($user->ID, 'user_lock_reason', true);
+            wp_logout();
+            $message = 'Seu acesso foi bloqueado. Motivo: ' . wp_kses_post($reason);
+            wp_die($message, 'Acesso Bloqueado', array('response' => 403));
+        }
+    }
+}
+
+// Exibe a mensagem de bloqueio na página de login
+add_filter('login_message', 'custom_show_blocked_message');
+
+function custom_show_blocked_message($message)
+{
+    if (isset($_GET['blocked']) && $_GET['blocked'] === 'true' && isset($_GET['reason'])) {
+        $reason = urldecode($_GET['reason']);
+        $message .= '<p class="woocommerce-error">Seu acesso foi bloqueado. Motivo: ' . wp_kses_post($reason) . '</p>';
+    }
+    return $message;
+}
