@@ -25,6 +25,52 @@
  *
  **/
 
+// Adiciona uma coluna de status de usuário à tabela de usuários
+add_filter('manage_users_columns', 'custom_add_user_status_column');
+
+function custom_add_user_status_column($columns)
+{
+    $columns['user_status'] = 'Status do usuário';
+    return $columns;
+}
+
+// Adiciona o valor da coluna de status de usuário à tabela de usuários
+add_action('manage_users_custom_column', 'custom_show_user_status_column', 10, 3);
+
+function custom_show_user_status_column($value, $column_name, $user_id)
+{
+    if ($column_name === 'user_status') {
+        $user_status = get_user_meta($user_id, 'user_status', true);
+        return ($user_status === 'blocked') ? 'Bloqueado' : 'Ativo';
+    }
+    return $value;
+}
+
+// Torna a coluna "Status do usuário" ordenável
+add_filter('manage_users_sortable_columns', 'custom_make_user_status_column_sortable');
+
+function custom_make_user_status_column_sortable($columns)
+{
+    $columns['user_status'] = 'user_status';
+    return $columns;
+}
+
+// Altera a consulta quando a coluna "Status do usuário" é usada para ordenação
+add_action('pre_get_users', 'custom_order_users_by_status');
+
+function custom_order_users_by_status($query)
+{
+    if (!is_admin() || !$query->is_main_query()) {
+        return;
+    }
+
+    $orderby = $query->get('orderby');
+    if ($orderby === 'user_status') {
+        $query->set('meta_key', 'user_status');
+        $query->set('orderby', 'meta_value');
+    }
+}
+
 
 // Adiciona uma opção para bloquear usuários na tela de edição de usuários
 add_action('show_user_profile', 'custom_add_user_lock_field');
@@ -75,7 +121,7 @@ function custom_block_blocked_users($user_login, $user)
         if ($user_status === 'blocked') {
             $reason = get_user_meta($user->ID, 'user_lock_reason', true);
             wp_logout();
-            $message = 'Seu acesso foi bloqueado. Motivo: ' . wp_kses_post($reason);
+            $message = 'O acesso desta conta foi bloqueado! ' . wp_kses_post($reason);
             wp_die($message, 'Acesso Bloqueado', array('response' => 403));
         }
     }
@@ -88,7 +134,7 @@ function custom_show_blocked_message($message)
 {
     if (isset($_GET['blocked']) && $_GET['blocked'] === 'true' && isset($_GET['reason'])) {
         $reason = urldecode($_GET['reason']);
-        $message .= '<p class="woocommerce-error">Seu acesso foi bloqueado. Motivo: ' . wp_kses_post($reason) . '</p>';
+        $message .= '<p class="woocommerce-error">O acesso desta conta foi bloqueado! ' . wp_kses_post($reason) . '</p>';
     }
     return $message;
 }
