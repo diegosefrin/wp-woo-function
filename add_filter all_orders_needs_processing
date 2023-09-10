@@ -3,3 +3,24 @@
  * Isso altera o valor de retorno padrão para verdadeiro, indicando que todos os itens do pedido devem ser processados.
  */
 add_filter( 'woocommerce_order_item_needs_processing', '__return_true' );
+
+/**
+ * Conclui automaticamente os pedidos para usuários com a função 'subscriber'.
+ *
+ * @param int $order_id ID do pedido.
+ */
+function custom_auto_complete_orders_for_subscribers($order_id) {
+    // Verifica se o usuário atual é um Assinante
+    $user = wp_get_current_user();
+    if (in_array('subscriber', $user->roles)) {
+        // Obtém o pedido
+        $order = wc_get_order($order_id);
+        
+        // Verifica se o pedido está no status 'processando' (pode ser outro status, se necessário)
+        if ($order->get_status() === 'processing') {
+            // Define o status do pedido como 'concluído' e registra a data de conclusão
+            $order->update_status('completed');
+        }
+    }
+}
+add_action('woocommerce_payment_complete', 'custom_auto_complete_orders_for_subscribers');
