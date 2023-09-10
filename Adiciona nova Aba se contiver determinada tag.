@@ -1,0 +1,25 @@
+// Adicionar uma nova aba "Utilidades" aos produtos com a tag "Utilidades"
+function add_utilities_tab($tabs) {
+    global $product;
+
+    // Verificar se o produto tem a tag "Utilidades"
+    $product_tags = wp_get_post_terms($product->get_id(), 'product_tag');
+    $tag_names = wp_list_pluck($product_tags, 'name');
+
+    if (in_array('Utilidades', $tag_names)) {
+        $tabs['utilidades'] = array(
+            'title' => 'Utilidades',
+            'priority' => 20,
+            'callback' => 'custom_utilities_tab_content', // Use um callback personalizado
+        );
+    }
+
+    return $tabs;
+}
+
+add_filter('woocommerce_product_tabs', 'add_utilities_tab');
+
+// Callback para o conteúdo da aba "Utilidades"
+function custom_utilities_tab_content() {
+    echo do_shortcode('[elementor-template id="293"]');
+}
