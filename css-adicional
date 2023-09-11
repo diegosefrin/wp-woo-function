@@ -1,0 +1,6 @@
+/* Altera a cor do texto "Clique aqui e informe o código do seu cupom de desconto" 
+presente no checkout para laranja */
+.message-container a.showcoupon {
+    color: orange; /* Substitua 'orange' pela cor laranja desejada */
+}
+
