@@ -1,6 +1,21 @@
-/* Altera a cor do texto "Clique aqui e informe o código do seu cupom de desconto" 
-presente no checkout para laranja */
-.message-container a.showcoupon {
-    color: orange; /* Substitua 'orange' pela cor laranja desejada */
-}
+/* Altera a cor do texto "Clique .... de desconto" no checkout para laranja */
+.message-container a.showcoupon {color: orange;}
 
+/* Defina a largura da coluna product-name como 50% */
+.product-name {width: 50%;}
+
+/* Defina a largura da coluna product-quantity como 0% (oculta) */
+.product-quantity {width: 0%; display: none;}
+
+/* Defina a largura da coluna product-subtotal como 50% */
+.product-subtotal {width: 50%;}
+
+.woocommerce-ordering {display: none;}
+
+
+.quantity, .product-quantity{display:none;}
+.post_comments{display:none;}
+.quantity{display:none;}
+.product-summary .quantity{display:none;}
+.mp-checkout-container{display:none}
+.mp-credits-banner-info {display: none;}
