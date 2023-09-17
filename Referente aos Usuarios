@@ -1,0 +1,188 @@
+// Adiciona uma coluna de status de usuário à tabela de usuários
+add_filter('manage_users_columns', 'custom_add_user_status_column');
+
+function custom_add_user_status_column($columns)
+{
+    $columns['user_status'] = 'Status do usuário';
+    return $columns;
+}
+
+// Adiciona o valor da coluna de status de usuário à tabela de usuários
+add_action('manage_users_custom_column', 'custom_show_user_status_column', 10, 3);
+
+function custom_show_user_status_column($value, $column_name, $user_id)
+{
+    if ($column_name === 'user_status') {
+        $user_status = get_user_meta($user_id, 'user_status', true);
+        return ($user_status === 'blocked') ? 'Bloqueado' : 'Ativo';
+    }
+    return $value;
+}
+
+// Torna a coluna "Status do usuário" ordenável
+add_filter('manage_users_sortable_columns', 'custom_make_user_status_column_sortable');
+
+function custom_make_user_status_column_sortable($columns)
+{
+    $columns['user_status'] = 'user_status';
+    return $columns;
+}
+
+// Altera a consulta quando a coluna "Status do usuário" é usada para ordenação
+add_action('pre_get_users', 'custom_order_users_by_status');
+
+function custom_order_users_by_status($query)
+{
+    if (!is_admin() || !$query->is_main_query()) {
+        return;
+    }
+
+    $orderby = $query->get('orderby');
+    if ($orderby === 'user_status') {
+        $query->set('meta_key', 'user_status');
+        $query->set('orderby', 'meta_value');
+    }
+}
+
+// Adiciona uma opção para bloquear usuários na tela de edição de usuários
+add_action('show_user_profile', 'custom_add_user_lock_field');
+add_action('edit_user_profile', 'custom_add_user_lock_field');
+
+function custom_add_user_lock_field($user)
+{
+    $user_status = get_user_meta($user->ID, 'user_status', true);
+    ?>
+    <h3>Bloquear usuário</h3>
+    <input type="checkbox" name="user_status" value="blocked" <?php checked($user_status, 'blocked'); ?> /> Bloquear usuário
+    <p>Ao bloquear este usuário, ele não poderá fazer login no site.</p>
+    <h3>Justificativa do bloqueio</h3>
+    <textarea name="user_lock_reason" rows="5" cols="50"><?php echo esc_textarea(get_user_meta($user->ID, 'user_lock_reason', true)); ?></textarea>
+    <?php
+}
+
+// Salva o status de bloqueio do usuário e a justificativa ao atualizar o perfil
+add_action('personal_options_update', 'custom_save_user_lock_data');
+add_action('edit_user_profile_update', 'custom_save_user_lock_data');
+
+function custom_save_user_lock_data($user_id)
+{
+    if (!current_user_can('edit_user', $user_id)) {
+        return;
+    }
+
+    if (isset($_POST['user_status']) && $_POST['user_status'] === 'blocked') {
+        update_user_meta($user_id, 'user_status', 'blocked');
+    } else {
+        delete_user_meta($user_id, 'user_status');
+    }
+
+    if (isset($_POST['user_lock_reason'])) {
+        update_user_meta($user_id, 'user_lock_reason', $_POST['user_lock_reason']);
+    } else {
+        delete_user_meta($user_id, 'user_lock_reason');
+    }
+}
+
+// Bloquear login para usuários bloqueados
+add_action('wp_login', 'custom_block_blocked_users', 10, 2);
+
+function custom_block_blocked_users($user_login, $user)
+{
+    if ($user && isset($user->ID)) {
+        $user_status = get_user_meta($user->ID, 'user_status', true);
+        if ($user_status === 'blocked') {
+            $reason = get_user_meta($user->ID, 'user_lock_reason', true);
+            wp_logout();
+            $message = '<h2 style="text-align: center;">O acesso desta conta foi bloqueado!</h2> ' . wp_kses_post($reason);
+            wp_die($message, 'Acesso Bloqueado', array('response' => 403));
+        }
+    }
+}
+
+// Exibe a mensagem de bloqueio na página de login
+add_filter('login_message', 'custom_show_blocked_message');
+
+function custom_show_blocked_message($message)
+{
+    if (isset($_GET['blocked']) && $_GET['blocked'] === 'true' && isset($_GET['reason'])) {
+        $reason = urldecode($_GET['reason']);
+        $message .= '<p class="woocommerce-error"><h2 style="text-align: center;">O acesso desta conta foi bloqueado!</h2> ' . wp_kses_post($reason) . '</p>';
+    }
+    return $message;
+}
+
+
+// Registra a data do último login do usuário
+function custom_track_user_last_login($user_login, $user) {
+    update_user_meta($user->ID, 'user_last_login', current_time('mysql'));
+}
+add_action('wp_login', 'custom_track_user_last_login', 10, 2);
+
+// Adiciona uma coluna personalizada na tela de "Todos os Usuários"
+function custom_add_last_login_column($columns) {
+    $columns['last_login'] = 'Último Login';
+    return $columns;
+}
+add_filter('manage_users_columns', 'custom_add_last_login_column');
+
+// Preenche a coluna com a data do último login
+function custom_show_last_login_column($value, $column_name, $user_id) {
+    if ($column_name === 'last_login') {
+        $last_login = get_user_meta($user_id, 'user_last_login', true);
+        return $last_login ? date('d/m/Y', strtotime($last_login)) : 'N/A';
+    }
+    return $value;
+}
+add_action('manage_users_custom_column', 'custom_show_last_login_column', 10, 3);
+
+// Exibe a data do último login na página de perfil do usuário
+function custom_show_last_login_field($user) {
+    $last_login = get_user_meta($user->ID, 'user_last_login', true);
+    ?>
+    <table class="form-table">
+        <tr>
+            <th><label for="user_last_login">Último Login</label></th>
+            <td>
+                <?php echo $last_login ? date('d/m/Y H:i:s', strtotime($last_login)) : 'N/A'; ?>
+            </td>
+        </tr>
+    </table>
+    <?php
+}
+add_action('show_user_profile', 'custom_show_last_login_field');
+add_action('edit_user_profile', 'custom_show_last_login_field');
+
+// Verifica a data do último login e bloqueia o usuário se necessário
+function custom_check_last_login_and_block_user() {
+    // Obtém todos os usuários
+    $users = get_users();
+
+    foreach ($users as $user) {
+        $last_login = get_user_meta($user->ID, 'user_last_login', true);
+        if ($last_login) {
+            $last_login_timestamp = strtotime($last_login);
+            $current_timestamp = current_time('timestamp');
+            $days_since_last_login = floor(($current_timestamp - $last_login_timestamp) / (60 * 60 * 24));
+
+            // Verifica se o usuário não fez login nos últimos 180 dias
+            if ($days_since_last_login > 180) {
+                // Bloqueia o usuário
+                update_user_meta($user->ID, 'user_status', 'blocked');
+
+                // Define a justificativa como "Inatividade"
+                update_user_meta($user->ID, 'user_lock_reason', 'Inatividade');
+            }
+        }
+    }
+}
+
+// Agende a verificação para ser executada diariamente
+function custom_schedule_check_last_login() {
+    if (!wp_next_scheduled('custom_check_last_login_event')) {
+        wp_schedule_event(current_time('timestamp'), 'daily', 'custom_check_last_login_event');
+    }
+}
+add_action('wp', 'custom_schedule_check_last_login');
+
+// Adicione uma ação para chamar a função de verificação
+add_action('custom_check_last_login_event', 'custom_check_last_login_and_block_user');
