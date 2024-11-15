@@ -1,0 +1,45 @@
+function update_multiple_product_ids_in_orders() {
+    // Defina os produtos a serem atualizados: 'nome do produto' => 'novo product_id'
+    $products_to_update = [
+        "Caixa Seu Carlos" => 7255,
+        "Caixa Iluminada Namorados" => 15238,
+        "Tábua De Carne Corinthians + Petisqueira" => 15245,
+        "Porta Ovos de Páscoa" => 7265,
+        "produto teste" => 15246,
+        "Porta Joias, Toulouse" => 15241,
+        "Pedido SobMedida - Leandro" => 15241,
+        "Luminária Solo Winter" => 10401,
+        "Calendário Permanente" => 7261,
+    ];
+
+    $orders = wc_get_orders([
+        'limit' => -1,
+        'status' => ['completed', 'processing']
+    ]);
+
+    foreach ($orders as $order) {
+        $updated = false;
+
+        foreach ($order->get_items() as $item_id => $item) {
+            $product_name = $item->get_name();
+            $product_id = $item->get_product_id();
+
+            // Verifica se o produto está na lista de atualização e não tem ID
+            if (array_key_exists($product_name, $products_to_update) && $product_id == 0) {
+                $new_product_id = $products_to_update[$product_name];
+                $item->set_product_id($new_product_id); // Atualiza o ID do produto
+                $updated = true;
+            }
+        }
+
+        if ($updated) {
+            $order->save(); // Salva o pedido se houver uma atualização
+            echo "Pedido #{$order->get_id()} atualizado.<br>";
+        }
+    }
+
+    echo "Processo concluído.";
+}
+
+// Executa a função (desative após o uso para evitar execuções indesejadas)
+update_multiple_product_ids_in_orders();
