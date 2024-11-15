@@ -1,0 +1,35 @@
+function update_specific_product_id_in_orders() {
+    // IDs dos produtos a serem atualizados
+    $old_product_id = 15242; // ID do produto a ser substituído
+    $new_product_id = 11002; // ID do produto substituto
+
+    // Busca todos os pedidos com status 'completed' ou 'processing'
+    $orders = wc_get_orders([
+        'limit' => -1,
+        'status' => ['completed', 'processing']
+    ]);
+
+    foreach ($orders as $order) {
+        $updated = false;
+
+        foreach ($order->get_items() as $item_id => $item) {
+            $product_id = $item->get_product_id();
+
+            // Verifica se o produto no pedido é o produto antigo
+            if ($product_id == $old_product_id) {
+                $item->set_product_id($new_product_id); // Atualiza para o novo ID do produto
+                $updated = true;
+            }
+        }
+
+        if ($updated) {
+            $order->save(); // Salva o pedido se houve uma atualização
+            echo "Pedido #{$order->get_id()} atualizado.<br>";
+        }
+    }
+
+    echo "Processo concluído.";
+}
+
+// Executa a função (desative após o uso para evitar execuções indesejadas)
+update_specific_product_id_in_orders();
